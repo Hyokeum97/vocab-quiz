@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📰 주간 단어 학습 & 복습 — W22</title>
+<style>
+:root{--ink:#1a1209;--paper:#f5f0e8;--aged:#e8dfc8;--rule:#c4b89a;--accent:#8b1a1a;--accent2:#1a4a6b;--muted:#6b5e4a;--ok:#1a5c1a;--no:#8b1a1a;--gold:#c79a3a}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:Georgia,serif;min-height:100vh;padding:16px}
+.wrap{max-width:720px;margin:0 auto}
+.head{text-align:center;padding:18px 0 12px;border-bottom:3px double var(--rule);margin-bottom:14px}
+.head h1{font-size:25px;letter-spacing:-0.5px}
+.head .sub{font-size:12px;color:var(--muted);margin-top:6px;font-style:italic}
+.viewtabs{display:flex;gap:8px;justify-content:center;margin-bottom:16px}
+.vtab{flex:1;max-width:180px;padding:12px;font-size:15px;font-weight:bold;border:2px solid var(--ink);background:transparent;color:var(--ink);border-radius:5px;cursor:pointer;font-family:inherit;transition:.15s}
+.vtab.on{background:var(--ink);color:var(--paper)}
+.bar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:12px}
+.barlabel{width:100%;text-align:center;font-size:11px;color:var(--muted);font-family:monospace;letter-spacing:1px;margin-bottom:2px}
+.chip{background:transparent;border:1px solid var(--rule);color:var(--muted);padding:5px 11px;font-size:12px;border-radius:3px;cursor:pointer;font-family:inherit;transition:.15s}
+.chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.modes{display:flex;gap:6px;justify-content:center;margin-bottom:14px}
+.mode{flex:1;max-width:140px;background:transparent;border:1px solid var(--rule);color:var(--muted);padding:9px;font-size:13px;border-radius:3px;cursor:pointer;font-family:inherit;transition:.15s}
+.mode.on{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.stats{display:flex;justify-content:space-around;font-size:12px;color:var(--muted);padding:10px 0;border-top:1px solid var(--aged);border-bottom:1px solid var(--aged);margin-bottom:6px}
+.stats b{color:var(--ink);font-size:15px;display:block;text-align:center}
+.prog{height:4px;background:var(--aged);border-radius:2px;margin-bottom:18px;overflow:hidden}
+.prog>div{height:100%;background:var(--accent);width:0;transition:width .3s}
+.card{background:#fff;border:1px solid var(--rule);border-radius:6px;padding:34px 24px;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.wk{position:absolute;top:10px;left:12px;font-size:10px;color:var(--muted);font-family:monospace;letter-spacing:1px}
+.star{position:absolute;top:8px;right:10px;font-size:22px;cursor:pointer;color:var(--rule);background:none;border:none;line-height:1}
+.star.on{color:var(--gold)}
+.tts{position:absolute;bottom:10px;right:12px;background:none;border:1px solid var(--rule);border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer;color:var(--muted);font-family:inherit}
+.tts:disabled{opacity:.4;cursor:default}
+.word{font-size:30px;font-weight:bold;text-align:center;margin-bottom:8px}
+.syn{font-size:13px;color:var(--muted);font-style:italic;text-align:center}
+.mean{font-size:22px;text-align:center;color:var(--accent2)}
+.cat{font-size:13px;color:var(--muted);margin-top:10px}
+.opts{display:flex;flex-direction:column;gap:8px;width:100%;margin-top:18px}
+.opt{background:#fff;border:1px solid var(--rule);border-radius:4px;padding:12px;font-size:15px;cursor:pointer;text-align:left;font-family:inherit;transition:.12s}
+.opt:hover{border-color:var(--ink)}
+.opt.correct{background:#e3f0e3;border-color:var(--ok);color:var(--ok)}
+.opt.wrong{background:#f3e0e0;border-color:var(--no);color:var(--no)}
+.inp{width:100%;padding:12px;font-size:16px;border:1px solid var(--rule);border-radius:4px;margin-top:16px;font-family:inherit;text-align:center}
+.inp:focus{outline:none;border-color:var(--accent)}
+.btns{display:flex;gap:8px;margin-top:16px;width:100%}
+.btn{flex:1;padding:13px;font-size:15px;border:none;border-radius:4px;cursor:pointer;font-family:inherit;font-weight:bold}
+.btn-ok{background:var(--ok);color:#fff}
+.btn-no{background:var(--no);color:#fff}
+.btn-nx{background:var(--ink);color:var(--paper)}
+.btn-gh{background:transparent;border:1px solid var(--rule);color:var(--muted)}
+.quick{display:flex;gap:6px;justify-content:center;margin-bottom:14px}
+.q{background:transparent;border:1px solid var(--rule);color:var(--muted);padding:6px 12px;font-size:12px;border-radius:3px;cursor:pointer;font-family:inherit}
+.q.on{background:var(--gold);color:#fff;border-color:var(--gold)}
+.save{text-align:center;font-size:11px;color:var(--muted);margin-top:12px;font-family:monospace}
+.end{text-align:center;padding:30px 20px}
+.end .score{font-size:48px;font-weight:bold;color:var(--accent)}
+.end .quote{font-style:italic;color:var(--muted);margin:16px 0;font-size:15px;line-height:1.6}
+.listcount{text-align:center;font-size:12px;color:var(--muted);margin-bottom:12px;font-family:monospace}
+.listtable{width:100%;border-collapse:collapse;font-size:14px}
+.listtable thead tr{border-bottom:2px solid var(--ink)}
+.listtable th{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:8px 10px;text-align:left}
+.listtable tbody tr{border-bottom:1px solid var(--aged)}
+.listtable td{padding:10px;vertical-align:top;line-height:1.5}
+.lw{font-weight:bold;font-size:15px;min-width:130px}
+.lw .lwk{font-family:monospace;font-size:9px;color:var(--muted);display:block;margin-top:2px}
+.lm{color:var(--accent2);min-width:160px}
+.ls{color:var(--muted);font-style:italic;font-size:12px}
+.lcat{white-space:nowrap;font-size:12px}
+.lspk{background:none;border:1px solid var(--rule);border-radius:14px;padding:2px 8px;font-size:11px;cursor:pointer;color:var(--muted);font-family:inherit}
+.lstar{background:none;border:none;font-size:17px;cursor:pointer;color:var(--rule);line-height:1}
+.lstar.on{color:var(--gold)}
+.listempty{text-align:center;padding:40px;color:var(--muted);font-style:italic}
+.stat-tap{cursor:pointer;border-radius:4px;transition:.12s;padding:0 6px}
+.panel-overlay{position:fixed;inset:0;background:rgba(26,18,9,.45);display:flex;align-items:flex-end;justify-content:center;z-index:50}
+.panel{background:var(--paper);border:1px solid var(--rule);border-radius:10px 10px 0 0;width:100%;max-width:720px;max-height:75vh;display:flex;flex-direction:column;box-shadow:0 -4px 22px rgba(0,0,0,.22)}
+.panel-head{display:flex;justify-content:space-between;align-items:center;padding:15px 18px;border-bottom:2px double var(--rule);font-size:16px;font-weight:bold}
+.panel-x{background:none;border:none;font-size:21px;cursor:pointer;color:var(--muted);line-height:1}
+.panel-body{overflow-y:auto;padding:10px 16px 26px}
+.panel-item{border-bottom:1px solid var(--aged);padding:11px 0}
+.pi-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.pi-w{font-weight:bold;font-size:16px}
+.pi-cat{font-size:11px;color:var(--muted);white-space:nowrap}
+.pi-m{color:var(--accent2);font-size:14px;margin-top:3px}
+.pi-s{color:var(--muted);font-style:italic;font-size:12px;margin-top:2px}
+.panel-empty{text-align:center;color:var(--muted);font-style:italic;padding:34px}
+.hidden{display:none!important}
+@media(max-width:560px){.ls{display:none}.listtable th:nth-child(3){display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1>📰 주간 단어 학습 & 복습</h1>
+    <div class="sub">W22 · 183개 단어 · 2026. 6. 6. PM 1:31:14</div>
+  </div>
+  <div class="viewtabs">
+    <button class="vtab on" id="tabList">📋 단어장</button>
+    <button class="vtab" id="tabQuiz">🎯 퀴즈</button>
+  </div>
+  <div class="barlabel">— 주차 —</div><div class="bar" id="weekBar"></div>
+  <div class="barlabel">— 카테고리 —</div><div class="bar" id="catBar"></div>
+  <div id="listView">
+    <div class="listcount" id="listCount"></div>
+    <table class="listtable">
+      <thead><tr><th>Word</th><th>한국어 뜻</th><th>Synonyms</th><th>Cat</th><th></th><th></th></tr></thead>
+      <tbody id="listBody"></tbody>
+    </table>
+    <div class="listempty hidden" id="listEmpty">선택한 조건에 맞는 단어가 없어요 😅</div>
+  </div>
+  <div id="quizView" class="hidden">
+    <div class="modes">
+      <button class="mode on" data-m="flash">🃏 플래시카드</button>
+      <button class="mode" data-m="mc">📝 객관식</button>
+      <button class="mode" data-m="type">⌨️ 입력</button>
+    </div>
+    <div class="quick">
+      <button class="q" id="qWrong">🔴 틀린 단어만</button>
+      <button class="q" id="qStar">⭐ 별표만</button>
+    </div>
+    <div class="stats">
+      <div><b id="sTotal">0</b>전체</div>
+      <div><b id="sCorrect">0</b>정답</div>
+      <div id="statWrong" class="stat-tap"><b id="sWrong">0</b>오답 🔍</div>
+      <div><b id="sStreak">0</b>연속</div>
+    </div>
+    <div class="prog"><div id="progFill"></div></div>
+    <div id="stage"></div>
+  </div>
+  <div class="panel-overlay hidden" id="panelOverlay">
+    <div class="panel">
+      <div class="panel-head"><span id="panelTitle">🔴 틀린 단어</span><button class="panel-x" id="panelClose">✕</button></div>
+      <div class="panel-body" id="panelBody"></div>
+    </div>
+  </div>
+  <div class="save" id="saveBadge">💾 새 세션 시작</div>
+</div>
+<script>
+const VOCAB=[
+['costlier','더 비용이 많이 드는, 더 값비슼','more expensive, pricier, dearer','💹','W22'],
+['on the back of a napkin','즉흥적으로, 대충 얼기설기 만든','hastily conceived, ill-thought-out, cobbled together','💬','W22'],
+['at will','마음대로, 원하는 대로','freely, as one pleases, without restriction','⚖️','W22'],
+['awry','잘못된, 틀어진, 엋na간','off course, off track, astray','📰','W22'],
+['havoc','대혼란, 큰 피해','chaos, mayhem, devastation','📰','W22'],
+['export-basket concentration','수출 품목 집중도, 수출 구조의 편중','trade diversification risk, commodity dependence','💹','W22'],
+['incinerating','소각하는, 불태워 없애는','burning, destroying, obliterating','🌿','W22'],
+['bonanza','횟재, 대박, 뜻밖의 풍요','windfall, boon, jackpot','💹','W22'],
+['legality','합법성, 법적 적법성','lawfulness, legitimacy, legal basis','⚖️','W22'],
+['impoverished','빈공에 빠뜨뒸렸다, 궁폙하게 만든다','pauperised, destitute, stripped of wealth','🌐','W22'],
+['wage','임금; (전쟁, 캔페인을) 벌이다','salary, earnings; conduct, carry out','💹','W22'],
+['obscures','가린다, 흐리게 한다, 불분명하게 만든다','masks, conceals, clouds','📰','W22'],
+['mayhem','대혼란, 아수라장','chaos, pandemonium, disorder','📰','W22'],
+['buckling','굴복하고 있는, 압박에 무너지는','caving in, yielding, collapsing','🏛️','W22'],
+['dissidents','반체제 인사들','activists, opponents, political prisoners','🏛️','W22'],
+['depot','창고, 차량 기지, 보급소','warehouse, yard, base','📰','W22'],
+['capitulate','항복하다, 굴복하다','surrender, yield, cave in','🏛️','W22'],
+['judicial','사법의, 법원의','legal, juridical, court-ordered','⚖️','W22'],
+['casualties','사상자, 피해자','fatalities, victims, losses','🪖','W22'],
+['subjected (to)','에 처하게 했다, 을 격게 했다','exposed to, put through, inflicted on','⚖️','W22'],
+['woefully','한심할 정도로, 형편없이','desperately, painfully, lamentably','📰','W22'],
+['capitulation','항복, 굴복, 백기투항','surrender, climb-down, cave-in','🏛️','W22'],
+['mulls','심사숙고하다, 검토하다','considers, weighs up, ponders','🏛️','W22'],
+['locked up','가됀다, 투옥했다','imprisoned, detained, incarcerated','⚖️','W22'],
+['drone-savvy','드론을 능숙하게 다루는','tech-savvy, skilled, proficient','🔬','W22'],
+['tepid','미지근한, 열의 없는, 소극적인','lukewarm, half-hearted, unenthusiastic','💬','W22'],
+['relinquish','포기하다, 내려놓다, 양도하다','surrender, abdicate, cede','🏛️','W22'],
+['Horn of Africa','아프리카의 땘 동북부 돌출 지역','East Africa, Red Sea corridor','🪖','W22'],
+['quagmire','수렁, 빠져나오기 어려운 곴경','morass, mire, predicament','🏛️','W22'],
+['blitz','맹공격, 집중 공세','assault, offensive, crackdown','🪖','W22'],
+['torpedo','어뢰; 좌초시키다, 망쳐놓다','derail, sabotage, sink','🏛️','W22'],
+['compatriots','동포, 같은 나라 사람들','fellow citizens, countrymen, nationals','🌐','W22'],
+['let alone','은 말할 것도 없고, 은커녀','much less, never mind, not to mention','💬','W22'],
+['inflicted (on)','고통, 피해를 가했다','dealt, caused, imposed','🪖','W22'],
+['relegation','강등, 하위 등급으로 내려감','demotion, downgrade, sidelining','🌐','W22'],
+['revisionary','수정주의적인, 기존을 재검토하는','reformist, heterodox, revisionist','💬','W22'],
+['The Times can reveal','본지가 단독으로 공개한다','exclusive, has learned, understands','📰','W22'],
+['mediocrity','평범함, 범용함, 중간 수준에 안주','averageness, inadequacy, underperformance','💬','W22'],
+['obnoxious','불쾌한, 역겨운, 거슬리는','offensive, objectionable, repugnant','💬','W22'],
+['grumbling','투덜거림, 내부 불만','discontent, murmuring, rumbling','🏛️','W22'],
+['proponents','지지자들, 옛호자들, 주창자들','advocates, champions, backers','🏛️','W22'],
+['lofty','고상한, 원대한; 거만한, 고압적인','noble, ambitious; haughty, condescending','💬','W22'],
+['pipsqueak','하찮은 사람, 별 볼 일 없는 존재','upstart, nobody, nonentity','🇬🇧','W22'],
+['detractor','비판자, 툵집 내는 사람','critic, opponent, naysayer','💬','W22'],
+['tsar','황제; 특정 분야의 총책임자','czar, overlord, supremo','🇬🇧','W22'],
+['Universal Credit','통합 벵지수당 (영국 사회보장 제도)','welfare benefits, means-tested support','🌐','W22'],
+['impeded','방해받았다, 가로막혀다','hindered, obstructed, hampered','📰','W22'],
+['folly','어리석음, 무모한 짓','recklessness, hubris, misjudgement','💬','W22'],
+['ferry','페리; 실어 나르다, 운반하다','transport, shuttle, convey','📰','W22'],
+['wagers','내기, 도박; 내기를 걸다','bets, gambles, stakes','💬','W22'],
+['alluded','암시했다, 넓지시 언급했다','hinted at, implied, insinuated','💬','W22'],
+['gargantuan','거대한, 엄청난, 방대한','colossal, mammoth, herculean','📰','W22'],
+['vexing','골치 아픈, 해결하기 까다로운','thorny, contentious, troublesome','💬','W22'],
+['bigwig','거물, 높은 사람, 유력 인사','heavyweight, big shot, grandee','🇬🇧','W22'],
+['grant','보조금, 지원금; 승인하다','funding, subsidy, bursary','🌐','W22'],
+['no stranger to','에 낙설지 않은, 이미 여러 번 격어본','well acquainted with, familiar with','📰','W22'],
+['in vogue','유행 중인, 트렌디한','fashionable, trending, au courant','🌐','W22'],
+['typify','전형적으로 보여주다, 대표하다','epitomise, exemplify, embody','📰','W22'],
+['truce','휴전, 일시적 정전','ceasefire, armistice, standstill','🪖','W22'],
+['teed up','준비된, 발판이 마련된','set up, lined up, primed','📰','W22'],
+['incumbent','현직자, 현임자','sitting MP, current holder, officeholder','🏛️','W22'],
+['spur','박차를 가하다, 자극하다; 동기','galvanise, stimulate, drive','💹','W22'],
+['blue touch paper','도화선, 폭발의 발단','spark, trigger, catalyst','🇬🇧','W22'],
+['inertial','관성적인, 변화에 저항하는','entrenched, resistant to change, status quo-oriented','🔬','W22'],
+['backtrack','발을 뺼다, 이전 입장을 철회하다','U-turn, row back, retreat','🏛️','W22'],
+['proposed','제안된, 계획 중인','planned, mooted, draft','🏛️','W22'],
+['fleet','함대, 선단; 차량/항공기 무리','convoy, squadron, armada','📰','W22'],
+['boon','혜택, 축복, 큰 도움이 되는 것','windfall, blessing, godsend','💹','W22'],
+['hawks','매파, 강경론자들','hardliners, interventionists, aggressors','🏛️','W22'],
+['likens','에 비유하다, 에 빗대다','compares to, draws parallels with, equates to','💬','W22'],
+['elbow aside','밀철내다, 강제로 몰아내다','oust, unseat, displace','🏛️','W22'],
+['characteristically','특유의 방식으로, 그답게','typically, true to form, as usual','💬','W22'],
+['hobbled','발목이 잡힌, 약화된, 제약을 받은','hamstrung, hindered, crippled','📰','W22'],
+['dynamism','역동성, 활력, 추진력','vitality, vigour, momentum','💹','W22'],
+['scuppered','좌초됐다, 망쳐졌다, 무산됩다','derailed, torpedoed, sabotaged','🏛️','W22'],
+['saddled with','원치 않는 부담을 떠안은','burdened with, lumbered with, encumbered','💹','W22'],
+['shale fracking','셸일 가스 수압파쇄, 프래킹','hydraulic fracturing, unconventional gas','🌿','W22'],
+['keen to acquiesce','기꺼이 따르려는, 순순히 받아들이려는','willing to comply, eager to go along','🏛️','W22'],
+['supercharged','강력하게 증폭된, 극도로 강화된','turbo-charged, amplified, intensified','📰','W22'],
+['ostentatious','과시적인, 허세 부리는','flamboyant, flashy, pretentious','🌐','W22'],
+['bursary','장학금, 생활비 지원금','scholarship, grant, stipend','🌐','W22'],
+['worse off','더 어려운 실정에 놓인, 형편이 나빠진','poorer, disadvantaged, struggling','💹','W22'],
+['ostensibly','표면상으로는, 겨으로 보기엔','supposedly, apparently, nominally','📰','W22'],
+['NEET','교육, 고용, 직업훈련 중 어느 것도 안 하는 청년','disengaged youth, economically inactive','🌐','W22'],
+['ebbed','서서히 줄어들었다, 약해졌다','waned, dwindled, faded','📰','W22'],
+['backed away from','이전 입장에서 슬그머니 후퇴하다','distanced from, retreated from, rowed back on','🏛️','W22'],
+['allegedly planned','계획했다고 주장되는','reportedly, purportedly, is said to have','⚖️','W22'],
+['perversely','뒤틀리게도, 역설적이게도','paradoxically, counterintuitively, ironically','💬','W22'],
+['ushered in','새로운 시대를 열었다','heralded, marked the beginning of, brought in','📰','W22'],
+['consolidate a chilling effect','위축 효과를 고착화하다','entrench, cement, reinforce suppression','⚖️','W22'],
+['pulled off','어려운 일을 해내다, 성공시키다','achieved, managed, accomplished','📰','W22'],
+['resonating well','잘 통하다, 호응을 얻다','landing well, striking a chord, going down well','📰','W22'],
+['rabble','오합지졸, 무질서한 군중','mob, horde, riffraff','🏛️','W22'],
+['pitted against','맞붙은, 대결하게 된','matched against, set against, faced off','📰','W22'],
+['pinned down with manifesto','공약집에 묶여있다','bound by, constrained by, locked into','🏛️','W22'],
+['pleas','간청, 호소','appeals, calls, entreaties','🏛️','W22'],
+['preposterous','터무니없는, 말도 안 되는','absurd, ludicrous, ridiculous','💬','W22'],
+['jettisoning','급하게 버리다, 포기하다','abandoning, ditching, scrapping','🏛️','W22'],
+['leading think tank','권위 있는 싱크탱크','policy institute, research body','🏛️','W22'],
+['canvassed','의견을 타진했다; 유권자를 만나 지지 호소했다','surveyed, consulted, lobbied','🏛️','W22'],
+['obstetrics and gynaecology (O&G)','산과학과 부인과학, 산부인과','maternal health, reproductive medicine','🌿','W22'],
+['stay the course','끝까지 버티다, 방침을 고수하다','hold firm, stand firm, keep on track','🏛️','W22'],
+['overhaul','전면 개편, 대대적인 개혁','reform, restructure, revamp','🏛️','W22'],
+['mock','모조의, 가짜의; 조롱하다','simulated, fake; ridicule, deride','🌐','W22'],
+['sequins and glares','스팽글과 날카로운 눈빛들','glitter and tension','🌐','W22'],
+['elicited','이끌어냈다, 불러일으켰다','prompted, provoked, drew','📰','W22'],
+['constituency','선거구; 지지 기반','electoral district, seat, voter base','🏛️','W22'],
+['tapering','단계적 감소, 점진적 축소','scaling back, unwinding, tightening','💹','W22'],
+['culmination','정점, 절정, 오랜 과정의 최종 결과','pinnacle, climax, apex','📰','W22'],
+['bigotry','편견, 독선, 완고한 차별 의식','prejudice, intolerance, discrimination','🌐','W22'],
+['ruling out','배제하다, 가능성을 차단하다','excluding, dismissing, taking off the table','🏛️','W22'],
+['fortnight','2주, 14일','two weeks','🇬🇧','W22'],
+['purrsonality (pun)','personality의 고양이식 말장난','wordplay, pun','🇬🇧','W22'],
+['jittery financial markets','불안에 떠는 금융 시장','volatile markets, nervous investors, turbulent trading','💹','W22'],
+['fiscal rules','재정 준칙, 재정 규율','budget rules, debt limits, spending constraints','💹','W22'],
+['nul points','0점, 완전히 외면당한 것','zero score, no support, total failure','🇬🇧','W22'],
+['put down to','의 탓으로 돌리다','attributed to, blamed on, chalked up to','📰','W22'],
+['greeted with outrage','분노로 맞이하다','met with fury, received with anger','📰','W22'],
+['underscore','강조하다, 부각시키다','highlight, emphasise, reinforce','📰','W22'],
+['gilt market','영국 국채 시장','bond market, sovereign debt market','💹','W22'],
+['government\'s curbs','정부의 제한 조치','restrictions, clampdown, controls','🏛️','W22'],
+['camp','과장되게 연극적인; 진영','theatrical, flamboyant; faction, side','🌐','W22'],
+['emporium','대형 상점; 풍요로운 집결지','bazaar, marketplace, treasury','💬','W22'],
+['Scotland Yard','런던 경찰청, 수도경찰청','the Met, Metropolitan Police','🇬🇧','W22'],
+['succumb','굴복하다, 쓰러지다','yield, capitulate, give way','📰','W22'],
+['improbable','있을 법하지 않은, 뜻밖의','unlikely, unexpected, implausible','💬','W22'],
+['perilous','위험천만한, 아슬아슬한','precarious, treacherous, hazardous','📰','W22'],
+['slugfest','치열한 난타전, 격렬한 접전','battle, fierce contest, dogfight','🌐','W22'],
+['fresh scrutiny','새롭게 불거진 의혹의 시선','renewed criticism, fresh questions, closer examination','📰','W22'],
+['irk','짜증나게 하다','annoy, irritate, vex','💬','W22'],
+['perpetrator','가해자, 범행을 저지른 사람','offender, suspect, assailant','⚖️','W22'],
+['backers','지지자들, 후원자들','supporters, allies, donors','🏛️','W22'],
+['in row over','을 둘러싼 논쟁에 휘말린','in dispute over, in conflict over','🇬🇧','W22'],
+['oust','몰아내다, 축출하다','remove, topple, unseat','🏛️','W22'],
+['thorniest issues','가장 까다로운 문제들','trickiest, most contentious, most sensitive','🏛️','W22'],
+['bill (legislative)','법안 (아직 통과 전)','draft legislation, proposed law','🏛️','W22'],
+['on the brink of','의 직전에, 벼랑 끝에','on the verge of, about to, on the edge of','🏛️','W22'],
+['for the time being','당분간, 지금으로서는','for now, temporarily, in the interim','💬','W22'],
+['vanguard','선봉, 선두주자','forefront, avant-garde, leading edge','💬','W22'],
+['a throng of photographers','사진기자들의 무리','a pack of journalists, a scrum of reporters','📰','W22'],
+['deputy leader','부대표, 부당수','vice leader, second-in-command','🏛️','W22'],
+['redacted','기밀 삭제된, 검열된','censored, blacked out, withheld','📰','W22'],
+['coronation','대관식; 경쟁 없는 당연한 선출','accession, rubber stamp, walkover','🏛️','W22'],
+['capping','상한선을 두는 것, 제한하는 것','limiting, ceiling, restricting','💹','W22'],
+['ballpark','대략적인 범위, 어림잡은 수치','estimate, approximation, rough figure','💹','W22'],
+['red wall','잉글랜드 북부 전통적 노동당 텃밭 지역','Labour heartlands, working-class strongholds','🇬🇧','W22'],
+['Parliamentary Commissioner for Standards','의회 윤리 감찰관','ethics watchdog, standards body','⚖️','W22'],
+['fails to emerge','가시화되지 않다, 결국 나서지 않다','does not materialise, fails to appear','📰','W22'],
+['full-throated','거리낌 없는, 전폭적인','wholehearted, unequivocal, unreserved','💬','W22'],
+['re-entering','재진입하는, 다시 들어오는','rejoining, returning to, resuming','🏛️','W22'],
+['nothing to the contrary','그와 반대되는 것이 없는, 달리 반박할 근거가 없는','no evidence against, no rebuttal','💬','W22'],
+['substantive priorities','실질적인 우선과제들','core priorities, concrete agenda','🏛️','W22'],
+['mutiny','반란, 반기','revolt, rebellion, insurrection','🏛️','W22'],
+['sanitary and phytosanitary (SPS)','위생 및 식물위생 조치','health standards, trade measures','🏛️','W22'],
+['arbitration case','중재 사건, 중재 소송','dispute resolution, tribunal, mediation','⚖️','W22'],
+['forefront','최전선, 선두, 중심','vanguard, cutting edge, leading position','📰','W22'],
+['extrapolated','추론했다, 기존 데이터를 바탕으로 추정했다','projected, estimated, inferred','🔬','W22'],
+['prejudicial','불리한, 편견을 조장하는','detrimental, harmful, biased','⚖️','W22'],
+['a frantic scramble','극도로 혼란스러운 쟁탈전','mad dash, chaotic rush, frenzy','🏛️','W22'],
+['prompted','촉발시켰다, 유발했다','triggered, sparked, caused','📰','W22'],
+['sees off','위협을 물리치다','defeats, repels, fends off','🏛️','W22'],
+['rummaged','샅샅이 뒤졌다','searched, scoured, rifled through','📰','W22'],
+['galvanise','분발시키다, 자극하여 행동하게 하다','spur, energise, mobilise','🏛️','W22'],
+['paddling','간신히 버티는, 물살을 헤쳐나가는','struggling, treading water, staying afloat','💬','W22'],
+['for the sake of political advancement','정치적 출세를 위해','for political gain, out of careerism','🏛️','W22'],
+['downplay','경시하다, 축소하다','play down, minimise, understate','📰','W22'],
+['straining the transatlantic relationship','미-유럽 관계에 긴장을 고조시키는','undermining, testing, destabilising','🏛️','W22'],
+['no half measures','어중간한 조치는 없다, 철저하게 한다','go all the way, no compromise','💬','W22'],
+['attire','복장, 의상, 차림새','dress, garb, apparel','🌐','W22'],
+['unwilling to budge','꿈쩍도 안 하려는, 입장을 바꾸지 않으려는','inflexible, unyielding, intransigent','🏛️','W22'],
+['emergency brake','비상 브레이크; (비유) 정책 제동','halt, stop, check','📰','W22'],
+['mooted','제안된, 거론된, 논의에 올려진','proposed, suggested, floated','🏛️','W22'],
+['mayoral nominees','시장 지명 인사들','appointees, candidates, designees','🏛️','W22'],
+['jurisdiction','관할권, 사법권','authority, domain, purview','⚖️','W22'],
+['manoeuvres','정치적 술수, 책략','tactics, machinations, scheming','🏛️','W22'],
+['interfaith work','종교 간 대화/협력 활동','ecumenical work, multifaith engagement','🌐','W22'],
+['blares like a klaxon','클랙슨처럼 크게 울려 퍼지다','rings alarm bells, screams, signals loudly','💬','W22'],
+['arm\'s-length body','독립 기관 (정부 영향 받지 않음)','quango, independent body, regulator','🏛️','W22'],
+['accommodating','융통성 있는, 협조적인, 완화적인','flexible, cooperative, loose','💹','W22'],
+['watchdog','감시 기관, 감독 기구','regulator, ombudsman, oversight body','⚖️','W22'],
+['conceded','인정했다, 양보했다','admitted, acknowledged, yielded','🏛️','W22'],
+['ground zero','진원지, 핵심 발원지','epicentre, flashpoint, origin','📰','W22'],
+['put up','내세우다, 출마시키다','field, nominate, back','🏛️','W22']
+];
+const CATS={'🏛️':'Politics','💹':'Economy','📰':'Media','🌐':'Society','🔬':'Science','🌿':'Health','⚖️':'Crime','🪖':'War','💬':'Opinion','🇬🇧':'British','😤':'Emotion','🕵️':'Mystery','🎭':'Character','⚔️':'Action','🧠':'Thought','🏥':'Physical','📜':'Literary'};
+const STORAGE_KEY='weekly_vocab_quiz_v1';
+const ttsOk='speechSynthesis' in window;
+let gbVoice=null;
+function initVoice(){if(!ttsOk)return;const vs=speechSynthesis.getVoices();if(!vs.length)return;gbVoice=vs.find(v=>v.lang==='en-GB')||vs.find(v=>v.lang==='en-AU')||vs.find(v=>v.lang.startsWith('en'))||vs[0];}
+if(ttsOk){initVoice();speechSynthesis.onvoiceschanged=initVoice;}
+function speak(t){if(!ttsOk)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);if(gbVoice)u.voice=gbVoice;u.rate=0.85;speechSynthesis.speak(u);}
+let view='list',mode='flash',deck=[],idx=0,correct=0,wrong=0,streak=0;
+let results={},starred=new Set(),activeWeeks=new Set(),activeCats=new Set(Object.keys(CATS));
+let quickMode=null,flipped=false,answered=false,savedMain=null;
+function loadState(){try{const r=localStorage.getItem(STORAGE_KEY);if(!r){badge('💾 새 세션 시작');return;}const d=JSON.parse(r);results=d.results||{};starred=new Set(d.starred||[]);badge('💾 기록 불러옴 · '+(d.savedAt?new Date(d.savedAt).toLocaleString('ko-KR'):'')+' 저장본');}catch(e){badge('💾 새 세션 시작');}}
+function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({results,starred:[...starred],savedAt:new Date().toISOString()}));badge('💾 자동 저장됨 · '+new Date().toLocaleTimeString('ko-KR'));}catch(e){}}
+function clearState(){try{localStorage.removeItem(STORAGE_KEY);}catch(e){}results={};starred=new Set();}
+function badge(t){document.getElementById('saveBadge').textContent=t;}
+function esc(s){return s.replace(/'/g,"\\'");}
+function allWeeks(){return [...new Set(VOCAB.map(v=>v[4]))].sort();}
+function buildBars(){
+  const wks=allWeeks();activeWeeks=new Set(wks);
+  const wb=document.getElementById('weekBar');
+  wb.innerHTML='<button class="chip on" data-w="ALL">전체 주차</button>'+wks.map(w=>'<button class="chip on" data-w="'+w+'">'+w+'</button>').join('');
+  wb.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>toggleWeek(c)));
+  const cb=document.getElementById('catBar');
+  cb.innerHTML='<button class="chip on" data-c="ALLC">전체</button>'+Object.entries(CATS).map(([e,n])=>'<button class="chip on" data-c="'+e+'">'+e+n+'</button>').join('');
+  cb.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>toggleCat(c)));
+}
+function toggleWeek(c){const w=c.dataset.w;if(w==='ALL'){const on=c.classList.contains('on');document.querySelectorAll('#weekBar .chip').forEach(x=>x.classList.toggle('on',!on));activeWeeks=on?new Set():new Set(allWeeks());}else{c.classList.toggle('on');if(c.classList.contains('on'))activeWeeks.add(w);else activeWeeks.delete(w);const a=document.querySelector('#weekBar .chip[data-w="ALL"]');if(a)a.classList.toggle('on',activeWeeks.size===allWeeks().length);}if(activeWeeks.size===0){c.classList.add('on');activeWeeks.add(w);}refresh();}
+function toggleCat(c){const e=c.dataset.c;if(e==='ALLC'){const on=c.classList.contains('on');document.querySelectorAll('#catBar .chip').forEach(x=>x.classList.toggle('on',!on));activeCats=on?new Set():new Set(Object.keys(CATS));}else{c.classList.toggle('on');if(c.classList.contains('on'))activeCats.add(e);else activeCats.delete(e);const a=document.querySelector('#catBar .chip[data-c="ALLC"]');if(a)a.classList.toggle('on',activeCats.size===Object.keys(CATS).length);}if(activeCats.size===0){c.classList.add('on');activeCats.add(e);}refresh();}
+function syncQuick(){document.getElementById('qWrong').classList.toggle('on',quickMode==='wrong');document.getElementById('qStar').classList.toggle('on',quickMode==='star');}
+function filtered(){return VOCAB.filter(v=>activeWeeks.has(v[4])&&activeCats.has(v[3]));}
+function refresh(){if(view==='list')renderList();else{quickMode=null;savedMain=null;syncQuick();buildDeck();}}
+function renderList(){const rows=filtered(),body=document.getElementById('listBody'),empty=document.getElementById('listEmpty');document.getElementById('listCount').textContent=rows.length+'개 단어';if(!rows.length){body.innerHTML='';empty.classList.remove('hidden');return;}empty.classList.add('hidden');body.innerHTML=rows.map(r=>'<tr><td class="lw">'+r[0]+'<span class="lwk">'+r[4]+'</span></td><td class="lm">'+r[1]+'</td><td class="ls">'+r[2]+'</td><td class="lcat">'+r[3]+'</td><td><button class="lspk" '+(ttsOk?'':'disabled')+' onclick="speak(''+esc(r[0])+'')">🔊</button></td><td><button class="lstar '+(starred.has(r[0])?'on':'')+'" onclick="toggleStar(''+esc(r[0])+'')">★</button></td></tr>').join('');}
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function buildDeck(){let pool=filtered();if(quickMode==='wrong')pool=pool.filter(v=>results[v[0]]==='wrong');if(quickMode==='star')pool=pool.filter(v=>starred.has(v[0]));deck=shuffle(pool);idx=0;correct=0;wrong=0;streak=0;answered=false;flipped=false;renderQuiz();}
+function renderQuiz(){
+  const st=document.getElementById('stage');
+  document.getElementById('sTotal').textContent=deck.length;
+  document.getElementById('sCorrect').textContent=correct;
+  document.getElementById('sWrong').textContent=wrong;
+  document.getElementById('sStreak').textContent=streak;
+  document.getElementById('progFill').style.width=deck.length?(idx/deck.length*100)+'%':'0%';
+  if(!deck.length){st.innerHTML='<div class="card"><div class="mean">선택한 조건에 맞는 단어가 없어요 😅</div></div>';return;}
+  if(idx>=deck.length){endScreen();return;}
+  const row=deck[idx],w=row[0],m=row[1],s=row[2],cat=row[3],wk=row[4];
+  const starOn=starred.has(w)?'on':'';
+  const ttsBtn='<button class="tts" '+(ttsOk?'':'disabled')+' onclick="event.stopPropagation();speak(''+esc(w)+'')">🔊</button>';
+  const starBtn='<button class="star '+starOn+'" onclick="event.stopPropagation();toggleStar(''+esc(w)+'')">★</button>';
+  if(mode==='flash'){const front='<div class="word">'+w+'</div>';const back='<div class="mean">'+m+'</div><div class="syn">'+s+'</div><div class="cat">'+cat+' '+(CATS[cat]||'')+'</div>';st.innerHTML='<div class="card"><span class="wk">'+wk+'</span>'+starBtn+ttsBtn+(flipped?back:front)+'</div>'+(flipped?'<div class="btns"><button class="btn btn-no" onclick="mark(false)">❌ 몰랐어</button><button class="btn btn-ok" onclick="mark(true)">✅ 알았어</button></div>':'<div class="btns"><button class="btn btn-nx" onclick="flip()">뒤집기 🔄</button></div>');}
+  else if(mode==='mc'){const others=shuffle(VOCAB.filter(v=>v[0]!==w)).slice(0,3).map(v=>v[1]);const opts=shuffle([m].concat(others));st.innerHTML='<div class="card"><span class="wk">'+wk+'</span>'+starBtn+ttsBtn+'<div class="word">'+w+'</div></div><div class="opts">'+opts.map((o,i)=>'<button class="opt" data-i="'+i+'">'+o+'</button>').join('')+'</div>';st.querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>{if(answered)return;answered=true;const chosen=opts[+b.dataset.i];st.querySelectorAll('.opt').forEach(x=>{if(opts[+x.dataset.i]===m)x.classList.add('correct');else if(x===b)x.classList.add('wrong');});setTimeout(()=>mark(chosen===m),750);}));}
+  else{st.innerHTML='<div class="card"><span class="wk">'+wk+'</span>'+starBtn+ttsBtn+'<div class="word">'+w+'</div></div><input class="inp" id="typeInp" placeholder="한국어 뜻 입력..." autocomplete="off"><div class="btns"><button class="btn btn-nx" onclick="checkType()">확인</button></div>';const inp=document.getElementById('typeInp');inp.focus();inp.addEventListener('keydown',e=>{if(e.key==='Enter')checkType();});}
+}
+function flip(){flipped=true;renderQuiz();}
+function checkType(){if(answered)return;const m=deck[idx][1],v=document.getElementById('typeInp').value.trim();answered=true;mark(v.length>=2&&m.replace(/s/g,'').includes(v.replace(/s/g,'').slice(0,3)));}
+function mark(ok){results[deck[idx][0]]=ok?'correct':'wrong';if(ok){correct++;streak++;}else{wrong++;streak=0;}saveState();idx++;answered=false;flipped=false;if(ttsOk)speechSynthesis.cancel();renderQuiz();}
+function toggleStar(w){if(starred.has(w))starred.delete(w);else starred.add(w);saveState();if(view==='list')renderList();else renderQuiz();}
+function endScreen(){const pct=deck.length?Math.round(correct/deck.length*100):0;const wc=deck.filter(v=>results[v[0]]==='wrong').length;const q=pct>=90?'"단어가 쌓이면 세계가 넓어진다." 🎉':pct>=70?'"꾸준함이 재능을 이긴다."':pct>=50?'"반복은 학습의 어머니."':'"실수는 배움의 첫걸음."';document.getElementById('stage').innerHTML='<div class="end"><div class="score">'+pct+'%</div><div>'+correct+' / '+deck.length+' 정답</div><div class="quote">'+q+'</div><div class="btns">'+(wc?'<button class="btn btn-no" onclick="reviewWrong()">🔴 틀린 단어 다시 ('+wc+')</button>':'')+'<button class="btn btn-nx" onclick="buildDeck()">🔄 다시 시작</button></div><div class="btns"><button class="btn btn-gh" onclick="if(confirm('모든 기록을 지울까요?')){clearAll();}">기록 초기화</button></div></div>';document.getElementById('progFill').style.width='100%';}
+function reviewWrong(){savedMain=null;quickMode='wrong';syncQuick();buildDeck();}
+function enterQuick(qm){if(quickMode===null)savedMain={deck:[...deck],idx,correct,wrong,streak};quickMode=qm;syncQuick();buildDeck();}
+function exitQuick(){quickMode=null;syncQuick();if(ttsOk)speechSynthesis.cancel();if(savedMain){deck=savedMain.deck;idx=savedMain.idx;correct=savedMain.correct;wrong=savedMain.wrong;streak=savedMain.streak;savedMain=null;answered=false;flipped=false;renderQuiz();}else buildDeck();}
+function showWrongPanel(){const wrongs=deck.slice(0,idx).filter(v=>results[v[0]]==='wrong');document.getElementById('panelTitle').textContent='🔴 지금까지 틀린 단어 ('+wrongs.length+')';const body=document.getElementById('panelBody');body.innerHTML=wrongs.length?wrongs.map(r=>'<div class="panel-item"><div class="pi-top"><span class="pi-w">'+r[0]+'</span><span class="pi-cat">'+r[3]+'</span></div><div class="pi-m">'+r[1]+'</div><div class="pi-s">'+r[2]+'</div></div>').join(''):'<div class="panel-empty">아직 틀린 단어가 없어요 👍</div>';document.getElementById('panelOverlay').classList.remove('hidden');}
+function closePanel(){document.getElementById('panelOverlay').classList.add('hidden');}
+function clearAll(){clearState();badge('💾 기록 초기화됨');refresh();}
+function switchView(v){view=v;document.getElementById('tabList').classList.toggle('on',v==='list');document.getElementById('tabQuiz').classList.toggle('on',v==='quiz');document.getElementById('listView').classList.toggle('hidden',v!=='list');document.getElementById('quizView').classList.toggle('hidden',v!=='quiz');if(ttsOk)speechSynthesis.cancel();refresh();}
+document.getElementById('tabList').addEventListener('click',()=>switchView('list'));
+document.getElementById('tabQuiz').addEventListener('click',()=>switchView('quiz'));
+document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.mode').forEach(x=>x.classList.remove('on'));b.classList.add('on');mode=b.dataset.m;if(deck.length&&idx<deck.length){answered=false;flipped=false;if(ttsOk)speechSynthesis.cancel();renderQuiz();}else buildDeck();}));
+document.getElementById('qWrong').addEventListener('click',()=>{if(quickMode==='wrong')exitQuick();else enterQuick('wrong');});
+document.getElementById('qStar').addEventListener('click',()=>{if(quickMode==='star')exitQuick();else enterQuick('star');});
+document.getElementById('statWrong').addEventListener('click',showWrongPanel);
+document.getElementById('panelClose').addEventListener('click',closePanel);
+document.getElementById('panelOverlay').addEventListener('click',e=>{if(e.target.id==='panelOverlay')closePanel();});
+loadState();buildBars();switchView('list');
+</script>
+</body>
+</html>
