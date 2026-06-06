@@ -391,6 +391,11 @@ async function main() {
   const notion = new Client({ auth: NOTION_TOKEN });
   const words  = await fetchWords(notion, weeks);
   if (words.length === 0) {
+    if (process.env.GITHUB_ACTIONS === 'true') {
+      // Actions: 이번 주 단어가 없으면 조용히 정상 종료 (워크플로우 실패 X)
+      console.log(`ℹ️  ${weeks.join(', ')}에 단어가 없어 — 이번 주는 건너뜀.`);
+      process.exit(0);
+    }
     console.error(`❌ ${weeks.join(', ')}에 해당하는 단어가 없어.`); process.exit(1);
   }
   console.log(`✅ ${words.length}개 단어 가져옴`);
