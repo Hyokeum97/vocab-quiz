@@ -1,0 +1,38 @@
+name: Weekly Vocab Quiz
+
+on:
+  schedule:
+    # 매주 일요일 08:00 UTC = 영국 시간 일요일 오전 8시(BST)/9시(GMT)
+    - cron: '0 8 * * 0'
+  workflow_dispatch:        # 수동 실행 버튼도 추가
+
+permissions:
+  contents: write           # repo에 index.html push 권한
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Generate quiz HTML
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+        run: node quiz-gen.js
+
+      - name: Commit and push index.html
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html quiz-*.html || true
+          git diff --staged --quiet || git commit -m "weekly quiz auto-update ($(date -u +%Y-%m-%d))"
+          git push
