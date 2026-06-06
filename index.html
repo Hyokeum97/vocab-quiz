@@ -93,7 +93,7 @@ body{background:var(--paper);color:var(--ink);font-family:Georgia,serif;min-heig
 
   <div class="head">
     <h1>📰 주간 단어 학습 &amp; 복습</h1>
-    <div class="sub">W22 · 183개 단어 · 2026. 6. 6. PM 5:25:13</div>
+    <div class="sub">W22 · 183개 단어 · 2026. 6. 6. PM 5:33:29</div>
   </div>
   <div class="viewtabs">
     <button class="vtab on" id="tabList">📋 단어장</button>
@@ -353,7 +353,7 @@ function toggleCat(c){const e=c.dataset.c;if(e==='ALLC'){const on=c.classList.co
 function syncQuick(){document.getElementById('qWrong').classList.toggle('on',quickMode==='wrong');document.getElementById('qStar').classList.toggle('on',quickMode==='star');}
 function filtered(){return VOCAB.filter(v=>activeWeeks.has(v[4])&&activeCats.has(v[3]));}
 function refresh(){if(view==='list')renderList();else{quickMode=null;savedMain=null;syncQuick();buildDeck();}}
-function renderList(){const rows=filtered(),body=document.getElementById('listBody'),empty=document.getElementById('listEmpty');document.getElementById('listCount').textContent=rows.length+'개 단어';if(!rows.length){body.innerHTML='';empty.classList.remove('hidden');return;}empty.classList.add('hidden');body.innerHTML=rows.map(r=>'<tr><td class="lw">'+r[0]+'<span class="lwk">'+r[4]+'</span></td><td class="lm">'+r[1]+'</td><td class="ls">'+r[2]+'</td><td class="lcat">'+r[3]+'</td><td><button class="lspk" '+(ttsOk?'':'disabled')+' onclick="speak(\''+esc(r[0])+'\')">🔊</button></td><td><button class="lstar '+(starred.has(r[0])?'on':'')+" onclick=\"toggleStar('\"'+esc(r[0])+"'\")\">★</button></td></tr>").join('');}
+function renderList(){const rows=filtered(),body=document.getElementById('listBody'),empty=document.getElementById('listEmpty');document.getElementById('listCount').textContent=rows.length+'개 단어';if(!rows.length){body.innerHTML='';empty.classList.remove('hidden');return;}empty.classList.add('hidden');body.innerHTML=rows.map(r=>{const sp='<button class="lspk" '+(ttsOk?'':'disabled')+' onclick="speak(\''+esc(r[0])+'\')">🔊</button>';const sr='<button class="lstar '+(starred.has(r[0])?'on':'')+'" onclick="toggleStar(\''+esc(r[0])+'\')">★</button>';return '<tr><td class="lw">'+r[0]+'<span class="lwk">'+r[4]+'</span></td><td class="lm">'+r[1]+'</td><td class="ls">'+r[2]+'</td><td class="lcat">'+r[3]+'</td><td>'+sp+'</td><td>'+sr+'</td></tr>';}).join('');}
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function buildDeck(){let pool=filtered();if(quickMode==='wrong')pool=pool.filter(v=>results[v[0]]==='wrong');if(quickMode==='star')pool=pool.filter(v=>starred.has(v[0]));deck=shuffle(pool);idx=0;correct=0;wrong=0;streak=0;answered=false;flipped=false;renderQuiz();}
 function renderQuiz(){
