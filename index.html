@@ -121,7 +121,7 @@ body{background:var(--paper);color:var(--ink);font-family:Georgia,serif;min-heig
     </div>
     <div class="stats">
       <div><b id="sTotal">0</b>전체</div>
-      <div><b id="sCorrect">0</b>정답</div>
+      <div id="statCorrect" class="stat-tap"><b id="sCorrect">0</b>정답 🔍</div>
       <div id="statWrong" class="stat-tap"><b id="sWrong">0</b>오답 🔍</div>
       <div><b id="sStreak">0</b>연속</div>
     </div>
@@ -333,8 +333,8 @@ function speak(t){if(!ttsOk)return;speechSynthesis.cancel();const u=new SpeechSy
 let view='list',mode='flash',deck=[],idx=0,correct=0,wrong=0,streak=0;
 let results={},starred=new Set(),activeWeeks=new Set(),activeCats=new Set(Object.keys(CATS));
 let quickMode=null,flipped=false,answered=false,savedMain=null;
-function loadState(){try{const r=localStorage.getItem(STORAGE_KEY);if(!r){badge('💾 새 세션 시작');return;}const d=JSON.parse(r);results=d.results||{};starred=new Set(d.starred||[]);badge('💾 기록 불러옴 · '+(d.savedAt?new Date(d.savedAt).toLocaleString('ko-KR'):'')+' 저장본');}catch(e){badge('💾 새 세션 시작');}}
-function saveState(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({results,starred:[...starred],savedAt:new Date().toISOString()}));badge('💾 자동 저장됨 · '+new Date().toLocaleTimeString('ko-KR'));}catch(e){}}
+function loadState(){try{const r=localStorage.getItem(STORAGE_KEY);if(!r){badge('💾 새 세션 시작');return;}const d=JSON.parse(r);results=d.results||{};starred=new Set(d.starred||[]);if(d.quiz&&d.quiz.deck&&d.quiz.deck.length&&d.quiz.idx<d.quiz.deck.length){deck=d.quiz.deck;idx=d.quiz.idx;correct=d.quiz.correct||0;wrong=d.quiz.wrong||0;streak=d.quiz.streak||0;mode=d.quiz.mode||'flash';quickMode=d.quiz.quickMode||null;document.querySelectorAll('.mode').forEach(b=>b.classList.toggle('on',b.dataset.m===mode));}badge('💾 기록 불러옴 · '+(d.savedAt?new Date(d.savedAt).toLocaleString('ko-KR'):'')+' 저장본');}catch(e){badge('💾 새 세션 시작');}}
+function saveState(){try{const qs=(deck.length&&idx<deck.length)?{deck,idx,correct,wrong,streak,mode,quickMode}:null;localStorage.setItem(STORAGE_KEY,JSON.stringify({results,starred:[...starred],savedAt:new Date().toISOString(),quiz:qs}));badge('💾 자동 저장됨 · '+new Date().toLocaleTimeString('ko-KR'));}catch(e){}}
 function clearState(){try{localStorage.removeItem(STORAGE_KEY);}catch(e){}results={};starred=new Set();}
 function badge(t){document.getElementById('saveBadge').textContent=t;}
 function esc(s){return s.replace(/'/g,"\\'");}
@@ -386,21 +386,23 @@ function renderQuiz(){
 }
 function flip(){flipped=true;renderQuiz();}
 function checkType(){if(answered)return;const m=deck[idx][1],v=document.getElementById('typeInp').value.trim();answered=true;mark(v.length>=2&&m.replace(/\s/g,'').includes(v.replace(/\s/g,'').slice(0,3)));}
-function mark(ok){results[deck[idx][0]]=ok?'correct':'wrong';if(ok){correct++;streak++;}else{wrong++;streak=0;}saveState();idx++;answered=false;flipped=false;if(ttsOk)speechSynthesis.cancel();renderQuiz();}
+function mark(ok){results[deck[idx][0]]=ok?'correct':'wrong';if(ok){correct++;streak++;}else{wrong++;streak=0;}idx++;saveState();answered=false;flipped=false;if(ttsOk)speechSynthesis.cancel();renderQuiz();}
 function toggleStar(w){if(starred.has(w))starred.delete(w);else starred.add(w);saveState();if(view==='list')renderList();else renderQuiz();}
 function endScreen(){const pct=deck.length?Math.round(correct/deck.length*100):0;const wc=deck.filter(v=>results[v[0]]==='wrong').length;const q=pct>=90?'"단어가 쌓이면 세계가 넓어진다." 🎉':pct>=70?'"꾸준함이 재능을 이긴다."':pct>=50?'"반복은 학습의 어머니."':'"실수는 배움의 첫걸음."';document.getElementById('stage').innerHTML='<div class="end"><div class="score">'+pct+'%</div><div>'+correct+' / '+deck.length+' 정답</div><div class="quote">'+q+'</div><div class="btns">'+(wc?'<button class="btn btn-no" onclick="reviewWrong()">🔴 틀린 단어 다시 ('+wc+')</button>':'')+'<button class="btn btn-nx" onclick="buildDeck()">🔄 다시 시작</button></div><div class="btns"><button class="btn btn-gh" onclick="if(confirm(\'모든 기록을 지울까요?\')){ clearAll();}">기록 초기화</button></div></div>';document.getElementById('progFill').style.width='100%';}
 function reviewWrong(){savedMain=null;quickMode='wrong';syncQuick();buildDeck();}
 function enterQuick(qm){if(quickMode===null)savedMain={deck:[...deck],idx,correct,wrong,streak};quickMode=qm;syncQuick();buildDeck();}
 function exitQuick(){quickMode=null;syncQuick();if(ttsOk)speechSynthesis.cancel();if(savedMain){deck=savedMain.deck;idx=savedMain.idx;correct=savedMain.correct;wrong=savedMain.wrong;streak=savedMain.streak;savedMain=null;answered=false;flipped=false;renderQuiz();}else buildDeck();}
 function showWrongPanel(){const wrongs=deck.slice(0,idx).filter(v=>results[v[0]]==='wrong');document.getElementById('panelTitle').textContent='🔴 지금까지 틀린 단어 ('+wrongs.length+')';const body=document.getElementById('panelBody');body.innerHTML=wrongs.length?wrongs.map(r=>'<div class="panel-item"><div class="pi-top"><span class="pi-w">'+r[0]+'</span><span class="pi-cat">'+r[3]+'</span></div><div class="pi-m">'+r[1]+'</div><div class="pi-s">'+r[2]+'</div></div>').join(''):'<div class="panel-empty">아직 틀린 단어가 없어요 👍</div>';document.getElementById('panelOverlay').classList.remove('hidden');}
+function showCorrectPanel(){const corrects=deck.slice(0,idx).filter(v=>results[v[0]]==='correct');document.getElementById('panelTitle').textContent='🟢 지금까지 맞힌 단어 ('+corrects.length+')';const body=document.getElementById('panelBody');body.innerHTML=corrects.length?corrects.map(r=>'<div class="panel-item"><div class="pi-top"><span class="pi-w">'+r[0]+'</span><span class="pi-cat">'+r[3]+'</span></div><div class="pi-m">'+r[1]+'</div><div class="pi-s">'+r[2]+'</div></div>').join(''):'<div class="panel-empty">아직 맞힌 단어가 없어요 😅</div>';document.getElementById('panelOverlay').classList.remove('hidden');}
 function closePanel(){document.getElementById('panelOverlay').classList.add('hidden');}
 function clearAll(){clearState();badge('💾 기록 초기화됨');refresh();}
-function switchView(v){view=v;document.getElementById('tabList').classList.toggle('on',v==='list');document.getElementById('tabQuiz').classList.toggle('on',v==='quiz');document.getElementById('listView').classList.toggle('hidden',v!=='list');document.getElementById('quizView').classList.toggle('hidden',v!=='quiz');if(ttsOk)speechSynthesis.cancel();refresh();}
+function switchView(v){view=v;document.getElementById('tabList').classList.toggle('on',v==='list');document.getElementById('tabQuiz').classList.toggle('on',v==='quiz');document.getElementById('listView').classList.toggle('hidden',v!=='list');document.getElementById('quizView').classList.toggle('hidden',v!=='quiz');if(ttsOk)speechSynthesis.cancel();if(v==='list')renderList();else if(deck.length&&idx<deck.length){syncQuick();renderQuiz();}else{quickMode=null;savedMain=null;syncQuick();buildDeck();}}
 document.getElementById('tabList').addEventListener('click',()=>switchView('list'));
 document.getElementById('tabQuiz').addEventListener('click',()=>switchView('quiz'));
 document.querySelectorAll('.mode').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.mode').forEach(x=>x.classList.remove('on'));b.classList.add('on');mode=b.dataset.m;if(deck.length&&idx<deck.length){answered=false;flipped=false;if(ttsOk)speechSynthesis.cancel();renderQuiz();}else buildDeck();}));
 document.getElementById('qWrong').addEventListener('click',()=>{if(quickMode==='wrong')exitQuick();else enterQuick('wrong');});
 document.getElementById('qStar').addEventListener('click',()=>{if(quickMode==='star')exitQuick();else enterQuick('star');});
+document.getElementById('statCorrect').addEventListener('click',showCorrectPanel);
 document.getElementById('statWrong').addEventListener('click',showWrongPanel);
 document.getElementById('panelClose').addEventListener('click',closePanel);
 document.getElementById('panelOverlay').addEventListener('click',e=>{if(e.target.id==='panelOverlay')closePanel();});
