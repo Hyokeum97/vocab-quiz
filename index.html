@@ -90,9 +90,10 @@ body{background:var(--paper);color:var(--ink);font-family:Georgia,serif;min-heig
 </head>
 <body>
 <div class="wrap">
+
   <div class="head">
-    <h1>📰 주간 단어 학습 & 복습</h1>
-    <div class="sub">W22 · 183개 단어 · 2026. 6. 6. PM 1:31:14</div>
+    <h1>📰 주간 단어 학습 &amp; 복습</h1>
+    <div class="sub">W22 · 183개 단어 · 2026. 6. 6. PM 5:20:40</div>
   </div>
   <div class="viewtabs">
     <button class="vtab on" id="tabList">📋 단어장</button>
@@ -134,6 +135,7 @@ body{background:var(--paper);color:var(--ink);font-family:Georgia,serif;min-heig
     </div>
   </div>
   <div class="save" id="saveBadge">💾 새 세션 시작</div>
+
 </div>
 <script>
 const VOCAB=[
@@ -351,7 +353,7 @@ function toggleCat(c){const e=c.dataset.c;if(e==='ALLC'){const on=c.classList.co
 function syncQuick(){document.getElementById('qWrong').classList.toggle('on',quickMode==='wrong');document.getElementById('qStar').classList.toggle('on',quickMode==='star');}
 function filtered(){return VOCAB.filter(v=>activeWeeks.has(v[4])&&activeCats.has(v[3]));}
 function refresh(){if(view==='list')renderList();else{quickMode=null;savedMain=null;syncQuick();buildDeck();}}
-function renderList(){const rows=filtered(),body=document.getElementById('listBody'),empty=document.getElementById('listEmpty');document.getElementById('listCount').textContent=rows.length+'개 단어';if(!rows.length){body.innerHTML='';empty.classList.remove('hidden');return;}empty.classList.add('hidden');body.innerHTML=rows.map(r=>'<tr><td class="lw">'+r[0]+'<span class="lwk">'+r[4]+'</span></td><td class="lm">'+r[1]+'</td><td class="ls">'+r[2]+'</td><td class="lcat">'+r[3]+'</td><td><button class="lspk" '+(ttsOk?'':'disabled')+' onclick="speak(''+esc(r[0])+'')">🔊</button></td><td><button class="lstar '+(starred.has(r[0])?'on':'')+'" onclick="toggleStar(''+esc(r[0])+'')">★</button></td></tr>').join('');}
+function renderList(){const rows=filtered(),body=document.getElementById('listBody'),empty=document.getElementById('listEmpty');document.getElementById('listCount').textContent=rows.length+'개 단어';if(!rows.length){body.innerHTML='';empty.classList.remove('hidden');return;}empty.classList.add('hidden');body.innerHTML=rows.map(r=>'<tr><td class="lw">'+r[0]+'<span class="lwk">'+r[4]+'</span></td><td class="lm">'+r[1]+'</td><td class="ls">'+r[2]+'</td><td class="lcat">'+r[3]+'</td><td><button class="lspk" '+(ttsOk?'':'disabled')+' onclick="speak(\''+esc(r[0])+'\')">🔊</button></td><td><button class="lstar '+(starred.has(r[0])?'on':'')+" onclick=\"toggleStar('\"'+esc(r[0])+"'\")\">★</button></td></tr>").join('');}
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function buildDeck(){let pool=filtered();if(quickMode==='wrong')pool=pool.filter(v=>results[v[0]]==='wrong');if(quickMode==='star')pool=pool.filter(v=>starred.has(v[0]));deck=shuffle(pool);idx=0;correct=0;wrong=0;streak=0;answered=false;flipped=false;renderQuiz();}
 function renderQuiz(){
@@ -365,17 +367,28 @@ function renderQuiz(){
   if(idx>=deck.length){endScreen();return;}
   const row=deck[idx],w=row[0],m=row[1],s=row[2],cat=row[3],wk=row[4];
   const starOn=starred.has(w)?'on':'';
-  const ttsBtn='<button class="tts" '+(ttsOk?'':'disabled')+' onclick="event.stopPropagation();speak(''+esc(w)+'')">🔊</button>';
-  const starBtn='<button class="star '+starOn+'" onclick="event.stopPropagation();toggleStar(''+esc(w)+'')">★</button>';
-  if(mode==='flash'){const front='<div class="word">'+w+'</div>';const back='<div class="mean">'+m+'</div><div class="syn">'+s+'</div><div class="cat">'+cat+' '+(CATS[cat]||'')+'</div>';st.innerHTML='<div class="card"><span class="wk">'+wk+'</span>'+starBtn+ttsBtn+(flipped?back:front)+'</div>'+(flipped?'<div class="btns"><button class="btn btn-no" onclick="mark(false)">❌ 몰랐어</button><button class="btn btn-ok" onclick="mark(true)">✅ 알았어</button></div>':'<div class="btns"><button class="btn btn-nx" onclick="flip()">뒤집기 🔄</button></div>');}
-  else if(mode==='mc'){const others=shuffle(VOCAB.filter(v=>v[0]!==w)).slice(0,3).map(v=>v[1]);const opts=shuffle([m].concat(others));st.innerHTML='<div class="card"><span class="wk">'+wk+'</span>'+starBtn+ttsBtn+'<div class="word">'+w+'</div></div><div class="opts">'+opts.map((o,i)=>'<button class="opt" data-i="'+i+'">'+o+'</button>').join('')+'</div>';st.querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>{if(answered)return;answered=true;const chosen=opts[+b.dataset.i];st.querySelectorAll('.opt').forEach(x=>{if(opts[+x.dataset.i]===m)x.classList.add('correct');else if(x===b)x.classList.add('wrong');});setTimeout(()=>mark(chosen===m),750);}));}
-  else{st.innerHTML='<div class="card"><span class="wk">'+wk+'</span>'+starBtn+ttsBtn+'<div class="word">'+w+'</div></div><input class="inp" id="typeInp" placeholder="한국어 뜻 입력..." autocomplete="off"><div class="btns"><button class="btn btn-nx" onclick="checkType()">확인</button></div>';const inp=document.getElementById('typeInp');inp.focus();inp.addEventListener('keydown',e=>{if(e.key==='Enter')checkType();});}
+  const ttsBtn='<button class="tts" '+(ttsOk?'':'disabled')+' onclick="event.stopPropagation();speak(\''+esc(w)+'\')">🔊</button>';
+  const starBtn='<button class="star '+starOn+'" onclick="event.stopPropagation();toggleStar(\''+esc(w)+'\')">★</button>';
+  if(mode==='flash'){
+    const front='<div class="word">'+w+'</div>';
+    const back='<div class="mean">'+m+'</div><div class="syn">'+s+'</div><div class="cat">'+cat+' '+(CATS[cat]||'')+'</div>';
+    st.innerHTML='<div class="card"><span class="wk">'+wk+'</span>'+starBtn+ttsBtn+(flipped?back:front)+'</div>'+(flipped?'<div class="btns"><button class="btn btn-no" onclick="mark(false)">❌ 몰랐어</button><button class="btn btn-ok" onclick="mark(true)">✅ 알았어</button></div>':'<div class="btns"><button class="btn btn-nx" onclick="flip()">뒤집기 🔄</button></div>');
+  } else if(mode==='mc'){
+    const others=shuffle(VOCAB.filter(v=>v[0]!==w)).slice(0,3).map(v=>v[1]);
+    const opts=shuffle([m].concat(others));
+    st.innerHTML='<div class="card"><span class="wk">'+wk+'</span>'+starBtn+ttsBtn+'<div class="word">'+w+'</div></div><div class="opts">'+opts.map((o,i)=>'<button class="opt" data-i="'+i+'">'+o+'</button>').join('')+'</div>';
+    st.querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>{if(answered)return;answered=true;const chosen=opts[+b.dataset.i];st.querySelectorAll('.opt').forEach(x=>{if(opts[+x.dataset.i]===m)x.classList.add('correct');else if(x===b)x.classList.add('wrong');});setTimeout(()=>mark(chosen===m),750);}));
+  } else {
+    st.innerHTML='<div class="card"><span class="wk">'+wk+'</span>'+starBtn+ttsBtn+'<div class="word">'+w+'</div></div><input class="inp" id="typeInp" placeholder="한국어 뜻 입력..." autocomplete="off"><div class="btns"><button class="btn btn-nx" onclick="checkType()">확인</button></div>';
+    const inp=document.getElementById('typeInp');inp.focus();
+    inp.addEventListener('keydown',e=>{if(e.key==='Enter')checkType();});
+  }
 }
 function flip(){flipped=true;renderQuiz();}
-function checkType(){if(answered)return;const m=deck[idx][1],v=document.getElementById('typeInp').value.trim();answered=true;mark(v.length>=2&&m.replace(/s/g,'').includes(v.replace(/s/g,'').slice(0,3)));}
+function checkType(){if(answered)return;const m=deck[idx][1],v=document.getElementById('typeInp').value.trim();answered=true;mark(v.length>=2&&m.replace(/\s/g,'').includes(v.replace(/\s/g,'').slice(0,3)));}
 function mark(ok){results[deck[idx][0]]=ok?'correct':'wrong';if(ok){correct++;streak++;}else{wrong++;streak=0;}saveState();idx++;answered=false;flipped=false;if(ttsOk)speechSynthesis.cancel();renderQuiz();}
 function toggleStar(w){if(starred.has(w))starred.delete(w);else starred.add(w);saveState();if(view==='list')renderList();else renderQuiz();}
-function endScreen(){const pct=deck.length?Math.round(correct/deck.length*100):0;const wc=deck.filter(v=>results[v[0]]==='wrong').length;const q=pct>=90?'"단어가 쌓이면 세계가 넓어진다." 🎉':pct>=70?'"꾸준함이 재능을 이긴다."':pct>=50?'"반복은 학습의 어머니."':'"실수는 배움의 첫걸음."';document.getElementById('stage').innerHTML='<div class="end"><div class="score">'+pct+'%</div><div>'+correct+' / '+deck.length+' 정답</div><div class="quote">'+q+'</div><div class="btns">'+(wc?'<button class="btn btn-no" onclick="reviewWrong()">🔴 틀린 단어 다시 ('+wc+')</button>':'')+'<button class="btn btn-nx" onclick="buildDeck()">🔄 다시 시작</button></div><div class="btns"><button class="btn btn-gh" onclick="if(confirm('모든 기록을 지울까요?')){clearAll();}">기록 초기화</button></div></div>';document.getElementById('progFill').style.width='100%';}
+function endScreen(){const pct=deck.length?Math.round(correct/deck.length*100):0;const wc=deck.filter(v=>results[v[0]]==='wrong').length;const q=pct>=90?'"단어가 쌓이면 세계가 넓어진다." 🎉':pct>=70?'"꾸준함이 재능을 이긴다."':pct>=50?'"반복은 학습의 어머니."':'"실수는 배움의 첫걸음."';document.getElementById('stage').innerHTML='<div class="end"><div class="score">'+pct+'%</div><div>'+correct+' / '+deck.length+' 정답</div><div class="quote">'+q+'</div><div class="btns">'+(wc?'<button class="btn btn-no" onclick="reviewWrong()">🔴 틀린 단어 다시 ('+wc+')</button>':'')+'<button class="btn btn-nx" onclick="buildDeck()">🔄 다시 시작</button></div><div class="btns"><button class="btn btn-gh" onclick="if(confirm(\'모든 기록을 지울까요?\')){ clearAll();}">기록 초기화</button></div></div>';document.getElementById('progFill').style.width='100%';}
 function reviewWrong(){savedMain=null;quickMode='wrong';syncQuick();buildDeck();}
 function enterQuick(qm){if(quickMode===null)savedMain={deck:[...deck],idx,correct,wrong,streak};quickMode=qm;syncQuick();buildDeck();}
 function exitQuick(){quickMode=null;syncQuick();if(ttsOk)speechSynthesis.cancel();if(savedMain){deck=savedMain.deck;idx=savedMain.idx;correct=savedMain.correct;wrong=savedMain.wrong;streak=savedMain.streak;savedMain=null;answered=false;flipped=false;renderQuiz();}else buildDeck();}
