@@ -1,0 +1,13 @@
+{
+  "name": "vocab-quiz-gen",
+  "version": "1.0.0",
+  "description": "Notion Vocabulary Bank → 주간 퀴즈 HTML 자동 생성",
+  "type": "module",
+  "scripts": {
+    "quiz": "node quiz-gen.js",
+    "quiz:week": "node quiz-gen.js"
+  },
+  "dependencies": {
+    "@notionhq/client": "^2.2.15"
+  }
+}
