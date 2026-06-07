@@ -2,16 +2,24 @@ name: Weekly Vocab Quiz
 
 on:
   schedule:
-    # 매주 일요일 08:00 UTC = 영국 시간 일요일 오전 8시(BST)/9시(GMT)
-    - cron: '0 8 * * 0'
-  workflow_dispatch:        # 수동 실행 버튼도 추가
+    # 매주 일요일 08:17 UTC (= 영국 BST 09:17 / GMT 08:17)
+    # 정각(0분) 회피 → GitHub Actions 부하가 낮은 시간대
+    - cron: '17 8 * * 0'
+  workflow_dispatch:
+    inputs:
+      weeks:
+        description: '특정 주차만 생성 (예: W23 W24). 비워두면 전체 누적.'
+        required: false
+        default: ''
 
 permissions:
-  contents: write           # repo에 index.html push 권한
+  contents: write
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -20,19 +28,40 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Generate quiz HTML
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-        run: node quiz-gen.js
+        run: |
+          if [ -n "${{ github.event.inputs.weeks }}" ]; then
+            node quiz-gen.js ${{ github.event.inputs.weeks }}
+          else
+            node quiz-gen.js --all
+          fi
 
       - name: Commit and push index.html
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html quiz-*.html || true
-          git diff --staged --quiet || git commit -m "weekly quiz auto-update ($(date -u +%Y-%m-%d))"
-          git push
+          if git diff --staged --quiet; then
+            echo "변경사항 없음 — 커밋 건너뜀"
+          else
+            git commit -m "quiz: auto-update $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+      - name: Job summary
+        if: always()
+        run: |
+          echo "## 📰 Vocab Quiz 빌드 결과" >> $GITHUB_STEP_SUMMARY
+          echo "- 실행 시각: $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- 트리거: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          if [ -f index.html ]; then
+            COUNT=$(grep -o "\\['[^']*','[^']*'" index.html | wc -l)
+            echo "- 단어 수: 약 ${COUNT}개" >> $GITHUB_STEP_SUMMARY
+          fi
