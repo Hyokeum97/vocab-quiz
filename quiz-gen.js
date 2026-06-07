@@ -6,6 +6,7 @@
  *
  * 사용법:
  *   node quiz-gen.js          ← 이번 주 (ISO 주차 자동 감지)
+ *   node quiz-gen.js --all    ← 전체 주차 누적 (GitHub Actions 기본값)
  *   node quiz-gen.js W23      ← 특정 주차 지정
  *   node quiz-gen.js W23 W24  ← 여러 주차 합산
  *
@@ -66,13 +67,17 @@ function sanitize(str) {
 async function fetchWords(notion, weeks) {
   const words = [];
   let cursor;
-  console.log(`📡 Notion에서 ${weeks.join(', ')} 단어 가져오는 중...`);
+  const label = weeks.length ? weeks.join(', ') : '전체 주차';
+  console.log(`📡 Notion에서 ${label} 단어 가져오는 중...`);
+  const filterProp = weeks.length === 0 ? {} : {
+    filter: weeks.length === 1
+      ? { property: 'Week', rich_text: { equals: weeks[0] } }
+      : { or: weeks.map(w => ({ property: 'Week', rich_text: { equals: w } })) },
+  };
   while (true) {
     const res = await notion.databases.query({
       database_id: DATA_SOURCE_ID,
-      filter: weeks.length === 1
-        ? { property: 'Week', rich_text: { equals: weeks[0] } }
-        : { or: weeks.map(w => ({ property: 'Week', rich_text: { equals: w } })) },
+      ...filterProp,
       start_cursor: cursor,
       page_size: 100,
     });
@@ -101,7 +106,12 @@ function buildVocabArray(words) {
 }
 
 function buildHTML(words, weeks) {
-  const weekLabel   = weeks.join('+');
+  const allWeeksInData = [...new Set(words.map(w => w.week))].sort();
+  const weekLabel = weeks.length
+    ? weeks.join('+')
+    : (allWeeksInData.length <= 6
+        ? allWeeksInData.join('+')
+        : `${allWeeksInData[0]}–${allWeeksInData[allWeeksInData.length - 1]}`);
   const vocabArray  = buildVocabArray(words);
   const generatedAt = new Date().toLocaleString('ko-KR');
 
@@ -386,10 +396,12 @@ async function deployToGitHub(html, weeks) {
 }
 
 async function main() {
-  const args  = process.argv.slice(2).filter(a => /^W\d+$/i.test(a));
-  const weeks = args.length > 0 ? args.map(w => w.toUpperCase()) : [getCurrentISOWeek()];
+  const weekArgs = process.argv.slice(2).filter(a => /^W\d+$/i.test(a));
+  const fetchAll = process.argv.includes('--all');
+  const weeks = fetchAll ? [] : (weekArgs.length > 0 ? weekArgs.map(w => w.toUpperCase()) : [getCurrentISOWeek()]);
+  const modeLabel = fetchAll ? '전체 (누적)' : weeks.join(', ');
   console.log(`\n📚 Vocab Quiz Generator`);
-  console.log(`📅 대상 주차: ${weeks.join(', ')}\n`);
+  console.log(`📅 대상 주차: ${modeLabel}\n`);
   const notion = new Client({ auth: NOTION_TOKEN });
   const words  = await fetchWords(notion, weeks);
   if (words.length === 0) {
@@ -402,8 +414,9 @@ async function main() {
   }
   console.log(`✅ ${words.length}개 단어 가져옴`);
   const html = buildHTML(words, weeks);
-  writeFileSync(join(__dir, `quiz-${weeks.join('-')}.html`), html, 'utf8');
-  console.log(`📄 로컬 저장: quiz-${weeks.join('-')}.html`);
+  const fileLabel = weeks.length ? weeks.join('-') : 'all';
+  writeFileSync(join(__dir, `quiz-${fileLabel}.html`), html, 'utf8');
+  console.log(`📄 로컬 저장: quiz-${fileLabel}.html`);
 
   if (process.env.GITHUB_ACTIONS === 'true') {
     // GitHub Actions 환경: index.html만 생성, push는 워크플로우가 처리
