@@ -168,6 +168,11 @@ body{background:var(--paper);color:var(--ink);font-family:Georgia,serif;min-heig
 .end .score{font-size:48px;font-weight:bold;color:var(--accent)}
 .end .quote{font-style:italic;color:var(--muted);margin:16px 0;font-size:15px;line-height:1.6}
 .listcount{text-align:center;font-size:12px;color:var(--muted);margin-bottom:12px;font-family:monospace}
+.listtools{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.search{flex:1;padding:10px 12px;font-size:14px;border:1px solid var(--rule);border-radius:4px;font-family:inherit;background:#fff;color:var(--ink)}
+.search:focus{outline:none;border-color:var(--accent)}
+.search::placeholder{color:var(--rule)}
+.searchx{background:none;border:1px solid var(--rule);border-radius:4px;padding:9px 11px;font-size:13px;cursor:pointer;color:var(--muted);font-family:inherit}
 .listtable{width:100%;border-collapse:collapse;font-size:14px}
 .listtable thead tr{border-bottom:2px solid var(--ink)}
 .listtable th{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:8px 10px;text-align:left}
@@ -211,6 +216,11 @@ body{background:var(--paper);color:var(--ink);font-family:Georgia,serif;min-heig
   <div class="barlabel">— 주차 —</div><div class="bar" id="weekBar"></div>
   <div class="barlabel">— 카테고리 —</div><div class="bar" id="catBar"></div>
   <div id="listView">
+    <div class="listtools">
+      <input class="search" id="searchInp" placeholder="🔍 단어 · 뜻 · 유의어 검색" autocomplete="off">
+      <button class="q" id="listStar">⭐ 별표만</button>
+      <button class="searchx hidden" id="searchClear">✕</button>
+    </div>
     <div class="listcount" id="listCount"></div>
     <table class="listtable">
       <thead><tr><th>Word</th><th>한국어 뜻</th><th>Synonyms</th><th>Cat</th><th></th><th></th></tr></thead>
@@ -264,6 +274,7 @@ body{background:var(--paper);color:var(--ink);font-family:Georgia,serif;min-heig
     "let view='list',mode='flash',deck=[],idx=0,correct=0,wrong=0,streak=0;",
     "let results={},starred=new Set(),activeWeeks=new Set(),activeCats=new Set(Object.keys(CATS));",
     "let quickMode=null,flipped=false,answered=false,savedMain=null;",
+    "let listSearch='',listStarOnly=false;",
     "function loadState(){try{const r=localStorage.getItem(STORAGE_KEY);if(!r){badge('💾 새 세션 시작');return;}const d=JSON.parse(r);results=d.results||{};starred=new Set(d.starred||[]);if(d.quiz&&d.quiz.deck&&d.quiz.deck.length&&d.quiz.idx<d.quiz.deck.length){deck=d.quiz.deck;idx=d.quiz.idx;correct=d.quiz.correct||0;wrong=d.quiz.wrong||0;streak=d.quiz.streak||0;mode=d.quiz.mode||'flash';quickMode=d.quiz.quickMode||null;document.querySelectorAll('.mode').forEach(b=>b.classList.toggle('on',b.dataset.m===mode));}badge('💾 기록 불러옴 · '+(d.savedAt?new Date(d.savedAt).toLocaleString('ko-KR'):'')+' 저장본');}catch(e){badge('💾 새 세션 시작');}}",
     "function saveState(){try{const qs=(deck.length&&idx<deck.length)?{deck,idx,correct,wrong,streak,mode,quickMode}:null;localStorage.setItem(STORAGE_KEY,JSON.stringify({results,starred:[...starred],savedAt:new Date().toISOString(),quiz:qs}));badge('💾 자동 저장됨 · '+new Date().toLocaleTimeString('ko-KR'));}catch(e){}}",
     "function clearState(){try{localStorage.removeItem(STORAGE_KEY);}catch(e){}results={};starred=new Set();}",
@@ -284,7 +295,7 @@ body{background:var(--paper);color:var(--ink);font-family:Georgia,serif;min-heig
     "function syncQuick(){document.getElementById('qWrong').classList.toggle('on',quickMode==='wrong');document.getElementById('qStar').classList.toggle('on',quickMode==='star');}",
     "function filtered(){return VOCAB.filter(v=>activeWeeks.has(v[4])&&activeCats.has(v[3]));}",
     "function refresh(){if(view==='list')renderList();else{quickMode=null;savedMain=null;syncQuick();buildDeck();}}",
-    "function renderList(){const rows=filtered(),body=document.getElementById('listBody'),empty=document.getElementById('listEmpty');document.getElementById('listCount').textContent=rows.length+'개 단어';if(!rows.length){body.innerHTML='';empty.classList.remove('hidden');return;}empty.classList.add('hidden');body.innerHTML=rows.map(r=>{const sp='<button class=\"lspk\" '+(ttsOk?'':'disabled')+' onclick=\"speak(\\''+esc(r[0])+'\\')\">🔊</button>';const sr='<button class=\"lstar '+(starred.has(r[0])?'on':'')+'\" onclick=\"toggleStar(\\''+esc(r[0])+'\\')\">★</button>';return '<tr><td class=\"lw\">'+r[0]+'<span class=\"lwk\">'+r[4]+'</span></td><td class=\"lm\">'+r[1]+'</td><td class=\"ls\">'+r[2]+'</td><td class=\"lcat\">'+r[3]+'</td><td>'+sp+'</td><td>'+sr+'</td></tr>';}).join('');}",
+    "function renderList(){let rows=filtered();if(listStarOnly)rows=rows.filter(r=>starred.has(r[0]));if(listSearch){const q=listSearch.toLowerCase();rows=rows.filter(r=>(r[0]+' '+r[1]+' '+r[2]).toLowerCase().includes(q));}const body=document.getElementById('listBody'),empty=document.getElementById('listEmpty');document.getElementById('listCount').textContent=rows.length+'개 단어';if(!rows.length){body.innerHTML='';empty.classList.remove('hidden');return;}empty.classList.add('hidden');body.innerHTML=rows.map(r=>{const sp='<button class=\"lspk\" '+(ttsOk?'':'disabled')+' onclick=\"speak(\\''+esc(r[0])+'\\')\">🔊</button>';const sr='<button class=\"lstar '+(starred.has(r[0])?'on':'')+'\" onclick=\"toggleStar(\\''+esc(r[0])+'\\')\">★</button>';return '<tr><td class=\"lw\">'+r[0]+'<span class=\"lwk\">'+r[4]+'</span></td><td class=\"lm\">'+r[1]+'</td><td class=\"ls\">'+r[2]+'</td><td class=\"lcat\">'+r[3]+'</td><td>'+sp+'</td><td>'+sr+'</td></tr>';}).join('');}",
     "function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}",
     "function buildDeck(){let pool=filtered();if(quickMode==='wrong')pool=pool.filter(v=>results[v[0]]==='wrong');if(quickMode==='star')pool=pool.filter(v=>starred.has(v[0]));deck=shuffle(pool);idx=0;correct=0;wrong=0;streak=0;answered=false;flipped=false;renderQuiz();}",
     "function renderQuiz(){",
@@ -337,6 +348,9 @@ body{background:var(--paper);color:var(--ink);font-family:Georgia,serif;min-heig
     "document.getElementById('statWrong').addEventListener('click',showWrongPanel);",
     "document.getElementById('panelClose').addEventListener('click',closePanel);",
     "document.getElementById('panelOverlay').addEventListener('click',e=>{if(e.target.id==='panelOverlay')closePanel();});",
+    "document.getElementById('searchInp').addEventListener('input',e=>{listSearch=e.target.value.trim();document.getElementById('searchClear').classList.toggle('hidden',!listSearch);renderList();});",
+    "document.getElementById('searchClear').addEventListener('click',()=>{listSearch='';const si=document.getElementById('searchInp');si.value='';document.getElementById('searchClear').classList.add('hidden');si.focus();renderList();});",
+    "document.getElementById('listStar').addEventListener('click',()=>{listStarOnly=!listStarOnly;document.getElementById('listStar').classList.toggle('on',listStarOnly);renderList();});",
     "loadState();buildBars();switchView('list');"
   ].join('\n');
 
